@@ -188,6 +188,35 @@ export default createWorkerHandler(router)
     }
   }
 
+  // 7. Update or create AGENTS.md for AI coding assistants
+  const agentsPath = path.join(cwd, 'AGENTS.md')
+  const cfAgentGuide = `
+## Cloudflare Workers & Deployment
+
+This project uses \`@bennyhinn18/remix-cloudflare\` to run on Cloudflare Workers.
+
+### Commands:
+- \`npm run preview\`: Previews Cloudflare Worker locally via Wrangler
+- \`npm run deploy\`: Builds assets and deploys to Cloudflare Workers
+
+### Edge Runtime Guidelines:
+- \`worker.ts\` is the Cloudflare entrypoint using \`createWorkerHandler(router)\`.
+- \`app/router.ts\` must remain edge-compatible without Node-specific modules (\`node:fs\`, \`createAssetServer\`).
+- Static assets are located in \`./public\` and served via Cloudflare Edge Assets (\`env.ASSETS\`).
+- Use \`getCloudflareContext(context)\` from \`@bennyhinn18/remix-cloudflare\` in actions to access \`env\`, \`ctx\`, and \`cf\` bindings.
+`
+
+  if (fs.existsSync(agentsPath)) {
+    const agentsContent = fs.readFileSync(agentsPath, 'utf-8')
+    if (!agentsContent.includes('Cloudflare Workers')) {
+      fs.appendFileSync(agentsPath, '\n' + cfAgentGuide.trim() + '\n', 'utf-8')
+      console.log('  ✅ Added Cloudflare guidance to existing AGENTS.md')
+    }
+  } else {
+    fs.writeFileSync(agentsPath, '# AI Agent Guide\n' + cfAgentGuide.trim() + '\n', 'utf-8')
+    console.log('  ✅ Created AGENTS.md with Cloudflare & Remix 3 guidelines')
+  }
+
   console.log(`
 🎉 Cloudflare Workers setup complete!
 

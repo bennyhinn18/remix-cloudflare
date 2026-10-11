@@ -100,3 +100,13 @@ test('CLI init updates server.ts for Node dev static assets', () => {
   assert.ok(serverContent.includes('staticFiles'), 'server.ts includes staticFiles')
   assert.ok(serverContent.includes('fetchHandler'), 'server.ts wraps fetchHandler')
 })
+
+test('CLI init generates or updates AGENTS.md with Cloudflare instructions', () => {
+  execFileSync(process.execPath, [cliPath, 'init'], { cwd: testDir })
+
+  assert.ok(fs.existsSync(path.join(testDir, 'AGENTS.md')), 'AGENTS.md created')
+  const agentsContent = fs.readFileSync(path.join(testDir, 'AGENTS.md'), 'utf-8')
+  assert.ok(agentsContent.includes('Cloudflare Workers & Deployment'), 'contains Cloudflare section')
+  assert.ok(agentsContent.includes('createWorkerHandler(router)'), 'contains worker guidance')
+})
+
