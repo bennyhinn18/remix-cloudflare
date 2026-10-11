@@ -10,7 +10,7 @@ import type { CreateWorkerHandlerOptions } from './types.js'
  *
  * @example
  * ```ts
- * import { createWorkerHandler } from 'remix-cloudflare'
+ * import { createWorkerHandler } from '@bennyhinn18/remix-cloudflare'
  * import { router } from './app/router.ts'
  *
  * export default createWorkerHandler(router)
@@ -25,6 +25,16 @@ export function createWorkerHandler<Env = Record<string, unknown>>(
   return {
     async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
       try {
+        // Decorate request with Cloudflare env and execution context
+        try {
+          Object.defineProperties(request, {
+            env: { value: env, writable: true, configurable: true, enumerable: true },
+            ctx: { value: ctx, writable: true, configurable: true, enumerable: true },
+          })
+        } catch {
+          // If request is frozen in a strict runtime, continue gracefully
+        }
+
         const response = await router.fetch(request)
 
         // If the router returned 404 and an ASSETS binding exists, fallback to Cloudflare Edge Assets

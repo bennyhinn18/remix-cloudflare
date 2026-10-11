@@ -30,3 +30,29 @@ export function cloudflareContext<Env = unknown>(
     return next()
   }
 }
+
+/**
+ * Helper to retrieve Cloudflare Worker bindings (env, ctx, cf) from any Remix context or request.
+ */
+export function getCloudflareContext<Env = Record<string, unknown>>(context: any): {
+  env: Env
+  ctx: ExecutionContext
+  cf?: IncomingRequestCfProperties
+} {
+  const req = context?.request ?? context
+  const env =
+    context?.get?.(CloudflareEnvKey) ??
+    req?.env ??
+    context?.env ??
+    {}
+  const ctx =
+    context?.get?.(CloudflareExecutionContextKey) ??
+    req?.ctx ??
+    context?.ctx
+  const cf =
+    context?.get?.(CloudflareCfKey) ??
+    req?.cf ??
+    context?.cf
+
+  return { env: env as Env, ctx: ctx as ExecutionContext, cf }
+}

@@ -1,6 +1,7 @@
 export { createWorkerHandler } from './handler.js'
 export {
   cloudflareContext,
+  getCloudflareContext,
   CloudflareEnvKey,
   CloudflareExecutionContextKey,
   CloudflareCfKey,

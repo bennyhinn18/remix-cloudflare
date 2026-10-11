@@ -27,26 +27,32 @@
 
 ---
 
-## 📦 Installation
+## ⚡ Quickstart (One Command)
+
+Inside any Remix 3 app, simply run:
 
 ```sh
-npm install @bennyhinn18/remix-cloudflare
+npx @bennyhinn18/remix-cloudflare init
 ```
 
-Ensure you have `@cloudflare/workers-types` and `wrangler` installed in your devDependencies:
-
-```sh
-npm install -D wrangler @cloudflare/workers-types
-```
+This automatically:
+- 📄 Generates `worker.ts` with `createWorkerHandler`.
+- ⚙️ Configures `wrangler.jsonc` with modern Edge Assets (`./public`).
+- 🛠️ Patches `package.json` to prevent hanging CI builds and adds `deploy`/`preview` scripts.
 
 ---
 
-## 🚀 Quickstart
+## 📦 Manual Installation
+
+```sh
+npm install @bennyhinn18/remix-cloudflare
+npm install -D wrangler @cloudflare/workers-types
+```
 
 ### 1. Create your Worker entrypoint (`worker.ts`)
 
 ```ts
-import { createWorkerHandler } from 'remix-cloudflare'
+import { createWorkerHandler } from '@bennyhinn18/remix-cloudflare'
 import { router } from './app/router.ts'
 
 export default createWorkerHandler(router)
@@ -108,9 +114,11 @@ In Remix 3, there is no mandatory compiler step for server routes. Cloudflare re
 
 ## 🗄️ Working with Cloudflare Bindings
 
-You can type and access Cloudflare bindings (D1 databases, KV namespaces, R2 buckets, and environment secrets) inside your actions:
+You can type and access Cloudflare bindings (D1 databases, KV namespaces, R2 buckets, and environment secrets) directly inside any Remix controller action using `getCloudflareContext`:
 
-```ts
+```tsx
+import { getCloudflareContext } from '@bennyhinn18/remix-cloudflare'
+
 interface Env {
   DB: D1Database
   SESSIONS: KVNamespace
@@ -118,7 +126,21 @@ interface Env {
   API_SECRET: string
 }
 
-export default createWorkerHandler<Env>(router)
+export default createController(routes, {
+  actions: {
+    async home(context) {
+      const { env, ctx, cf } = getCloudflareContext<Env>(context)
+
+      // Query Cloudflare D1
+      const users = await env.DB.prepare('SELECT * FROM users').all()
+
+      // Read Cloudflare Geolocation
+      const country = cf?.country
+
+      return context.render(<HomePage users={users} country={country} />)
+    },
+  },
+})
 ```
 
 ---
