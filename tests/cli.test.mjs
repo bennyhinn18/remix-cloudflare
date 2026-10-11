@@ -110,3 +110,84 @@ test('CLI init generates or updates AGENTS.md with Cloudflare instructions', () 
   assert.ok(agentsContent.includes('createWorkerHandler(router)'), 'contains worker guidance')
 })
 
+test('CLI --help and -h displays structured usage and commands', () => {
+  const output = execFileSync(process.execPath, [cliPath, '--help'], { encoding: 'utf-8' })
+  assert.ok(output.includes('USAGE:'))
+  assert.ok(output.includes('COMMANDS:'))
+  assert.ok(output.includes('init'))
+  assert.ok(output.includes('doctor'))
+  assert.ok(output.includes('OPTIONS:'))
+})
+
+test('CLI --version and -v outputs current version', () => {
+  const output = execFileSync(process.execPath, [cliPath, '-v'], { encoding: 'utf-8' })
+  assert.ok(output.includes('v0.2.1'))
+})
+
+test('CLI doctor detects issues before init and passes after init', () => {
+  // Before init, doctor should exit 1 because worker.ts and wrangler config are missing
+  assert.throws(() => {
+    execFileSync(process.execPath, [cliPath, 'doctor'], { cwd: testDir, stdio: 'pipe' })
+  })
+
+  // Run init
+  execFileSync(process.execPath, [cliPath, 'init'], { cwd: testDir })
+
+  // After init, doctor should exit 0 cleanly
+  const output = execFileSync(process.execPath, [cliPath, 'doctor'], { cwd: testDir, encoding: 'utf-8' })
+  assert.ok(output.includes('All checks passed'))
+})
+
+test('CLI new scaffolds a complete ready-to-run Remix 3 + Cloudflare project', () => {
+  const newAppDir = path.resolve('tests/fresh-app')
+  if (fs.existsSync(newAppDir)) {
+    fs.rmSync(newAppDir, { recursive: true, force: true })
+  }
+
+  try {
+    execFileSync(process.execPath, [cliPath, 'new', 'tests/fresh-app'])
+
+    // Verify all core files
+    assert.ok(fs.existsSync(path.join(newAppDir, 'package.json')), 'package.json exists')
+    assert.ok(fs.existsSync(path.join(newAppDir, 'worker.ts')), 'worker.ts exists')
+    assert.ok(fs.existsSync(path.join(newAppDir, 'wrangler.jsonc')), 'wrangler.jsonc exists')
+    assert.ok(fs.existsSync(path.join(newAppDir, 'server.ts')), 'server.ts exists')
+    assert.ok(fs.existsSync(path.join(newAppDir, 'app/routes.ts')), 'routes.ts exists')
+    assert.ok(fs.existsSync(path.join(newAppDir, 'app/router.ts')), 'router.ts exists')
+    assert.ok(fs.existsSync(path.join(newAppDir, 'app/actions/controller.tsx')), 'controller.tsx exists')
+    assert.ok(fs.existsSync(path.join(newAppDir, 'app/actions/document.tsx')), 'document.tsx exists')
+    assert.ok(fs.existsSync(path.join(newAppDir, 'app/actions/home-page.tsx')), 'home-page.tsx exists')
+    assert.ok(fs.existsSync(path.join(newAppDir, 'AGENTS.md')), 'AGENTS.md exists')
+    assert.ok(fs.existsSync(path.join(newAppDir, 'public/styles.css')), 'styles.css exists')
+
+    // Verify doctor passes on freshly scaffolded app!
+    const doctorOutput = execFileSync(process.execPath, [cliPath, 'doctor'], { cwd: newAppDir, encoding: 'utf-8' })
+    assert.ok(doctorOutput.includes('All checks passed'), 'fresh scaffold passes doctor')
+  } finally {
+    if (fs.existsSync(newAppDir)) {
+      fs.rmSync(newAppDir, { recursive: true, force: true })
+    }
+  }
+})
+
+test('CLI init in empty directory automatically scaffolds project', () => {
+  const emptyDir = path.resolve('tests/empty-app')
+  if (fs.existsSync(emptyDir)) {
+    fs.rmSync(emptyDir, { recursive: true, force: true })
+  }
+  fs.mkdirSync(emptyDir, { recursive: true })
+
+  try {
+    execFileSync(process.execPath, [cliPath, 'init'], { cwd: emptyDir })
+    assert.ok(fs.existsSync(path.join(emptyDir, 'package.json')), 'package.json auto-scaffolded')
+    assert.ok(fs.existsSync(path.join(emptyDir, 'worker.ts')), 'worker.ts auto-scaffolded')
+    assert.ok(fs.existsSync(path.join(emptyDir, 'wrangler.jsonc')), 'wrangler.jsonc auto-scaffolded')
+  } finally {
+    if (fs.existsSync(emptyDir)) {
+      fs.rmSync(emptyDir, { recursive: true, force: true })
+    }
+  }
+})
+
+
+

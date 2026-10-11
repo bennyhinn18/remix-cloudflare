@@ -27,9 +27,31 @@
 
 ---
 
-## ⚡ Quickstart (One Command)
+## ⚡ Quickstart
 
-Inside any Remix 3 app, simply run:
+### 1. Create a Brand New Project (Zero Config)
+
+Scaffold a complete, production-ready Remix 3 + Cloudflare Workers app with one command:
+
+```sh
+npm create @bennyhinn18/remix-cloudflare my-app
+# or
+npx @bennyhinn18/remix-cloudflare new my-app
+```
+
+Then start building:
+```sh
+cd my-app
+npm install
+npm run preview   # Run locally on Cloudflare Workers Miniflare
+npm run deploy    # Deploy live to Cloudflare Workers
+```
+
+---
+
+### 2. Migrate an Existing Remix 3 Project
+
+Inside any existing Remix 3 project directory:
 
 ```sh
 npx @bennyhinn18/remix-cloudflare init
