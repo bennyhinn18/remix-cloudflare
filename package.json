@@ -48,6 +48,7 @@
   "scripts": {
     "build": "tsup src/index.ts src/cli.ts --format esm,cjs --dts --clean",
     "dev": "tsup src/index.ts src/cli.ts --format esm,cjs --dts --watch",
+    "test": "node --test tests/*.test.mjs",
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
