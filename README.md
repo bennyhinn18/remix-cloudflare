@@ -41,6 +41,27 @@ This automatically:
 - 🛠️ Patches `package.json` with `deploy` and `preview` scripts, and fixes hanging CI builds.
 - 🌐 Refactors `app/router.ts` for edge runtime (decoupling Node-only asset bundlers, with automatic `.bak` backup).
 - 🔄 Updates `server.ts` so `npm run dev` continues serving static assets in local Node development.
+- 🤖 Generates or updates `AGENTS.md` so AI coding assistants (Cursor, Copilot, Antigravity) understand the setup.
+
+### 🩺 Diagnostic Health Check
+
+Verify your project's readiness for Cloudflare Workers at any time:
+
+```sh
+npx @bennyhinn18/remix-cloudflare doctor
+```
+
+```text
+🩺 Running Remix 3 Cloudflare Worker Diagnostic Checks...
+
+  ✅ worker.ts: Valid Cloudflare worker entrypoint found
+  ✅ Wrangler config: Found configuration file
+  ✅ app/router.ts: Edge-compatible (pure Web router)
+  ✅ package.json: "build" script is non-blocking
+  ✅ package.json: @bennyhinn18/remix-cloudflare is listed
+
+🎉 All checks passed! Your project is ready for Cloudflare Workers.
+```
 
 ---
 

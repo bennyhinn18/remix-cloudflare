@@ -44,12 +44,11 @@ remix-cloudflare/
    - Type-safe extraction helper: `const { env, ctx, cf } = getCloudflareContext<Env>(context)`.
    - Accesses Cloudflare D1, KV, R2, Vectorize, and Workers AI bindings inside Remix action controllers.
 
-3. **`src/cli.ts` (`init`)**:
-   - Scaffolds `worker.ts` with `createWorkerHandler`.
-   - Generates `wrangler.jsonc` with `nodejs_compat` and edge assets.
-   - Cleans `package.json` scripts (`build`, `deploy`, `preview`) and adds dependencies.
-   - Refactors `app/router.ts` for edge runtime (decoupling Node-only asset servers), creating a `.bak` backup.
-   - Updates `server.ts` to keep local Node development (`npm run dev`) working seamlessly.
+3. **`src/cli.ts` (CLI Suite)**:
+   - `init`: Scaffolds `worker.ts`, `wrangler.jsonc`, patches `package.json`, refactors `app/router.ts` for edge (with `.bak` backup), updates `server.ts`, and adds/updates `AGENTS.md`. Supports `--dry-run` and `--force`.
+   - `doctor` / `check`: Health check tool for AI agents and developers. Validates entrypoint, Wrangler config, router edge compatibility, and non-blocking build scripts with 0/1 exit codes.
+   - `help` / `--help` / `-h`: Displays structured usage documentation.
+   - `version` / `--version` / `-v`: Displays current CLI version.
 
 ---
 
