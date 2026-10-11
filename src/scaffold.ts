@@ -9,7 +9,7 @@ export interface ScaffoldOptions {
 
 export function scaffoldProject(options: ScaffoldOptions) {
   const { projectName, targetDir, dryRun = false } = options
-  const version = '0.2.1'
+  const version = '0.3.0'
 
   console.log(`\n📦 Scaffolding new Remix 3 + Cloudflare Workers project in:\n   ${targetDir}\n`)
 

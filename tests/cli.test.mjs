@@ -121,7 +121,7 @@ test('CLI --help and -h displays structured usage and commands', () => {
 
 test('CLI --version and -v outputs current version', () => {
   const output = execFileSync(process.execPath, [cliPath, '-v'], { encoding: 'utf-8' })
-  assert.ok(output.includes('v0.2.1'))
+  assert.ok(output.includes('v0.3.0'))
 })
 
 test('CLI doctor detects issues before init and passes after init', () => {
