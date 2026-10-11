@@ -1,4 +1,4 @@
-# remix-cloudflare
+# @bennyhinn18/remix-cloudflare
 
 <div align="center">
 
@@ -15,11 +15,11 @@
 
 ---
 
-## ⚡ Why remix-cloudflare?
+## ⚡ Why @bennyhinn18/remix-cloudflare?
 
 **Remix 3** dropped React in favor of native Web Platform primitives (`Request`, `Response`, `TransformStream`, and `createRouter`). While Remix 3's router is runtime-agnostic, running it on Cloudflare requires bridging between Cloudflare's `ExportedHandler` (`fetch(request, env, ctx)`) and Remix's Fetch router, without pulling in Node-only disk filesystem dependencies (`node:fs`).
 
-`remix-cloudflare` provides:
+`@bennyhinn18/remix-cloudflare` provides:
 - 🚀 **Zero Overhead**: Direct native Web Fetch bridge with no runtime bloat.
 - 🌐 **Static Asset Fallback**: Seamless integration with Cloudflare's modern `ASSETS` binding.
 - 🔒 **Type-Safe Bindings**: Access Cloudflare D1, KV, R2, Vectorize, and AI directly from Remix actions.
@@ -30,7 +30,7 @@
 ## 📦 Installation
 
 ```sh
-npm install remix-cloudflare
+npm install @bennyhinn18/remix-cloudflare
 ```
 
 Ensure you have `@cloudflare/workers-types` and `wrangler` installed in your devDependencies:
