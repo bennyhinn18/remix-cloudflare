@@ -63,14 +63,17 @@ export default createWorkerHandler(router)
     console.log('  ℹ️  Wrangler configuration already exists (skipped)')
   }
 
-  // 3. Patch package.json scripts
+  // 3. Patch package.json scripts and dependencies
   const pkgPath = path.join(cwd, 'package.json')
   if (fs.existsSync(pkgPath)) {
     try {
       const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'))
       pkg.scripts = pkg.scripts || {}
+      pkg.dependencies = pkg.dependencies || {}
+      pkg.devDependencies = pkg.devDependencies || {}
 
       let modified = false
+
       // Fix build script if it starts the server
       if (pkg.scripts.build && pkg.scripts.build.includes('npm run start')) {
         pkg.scripts.build = pkg.scripts.build.replace(/\s*&&\s*npm run start/, '')
@@ -90,6 +93,20 @@ export default createWorkerHandler(router)
         console.log('  ✅ Added "preview" script to package.json')
       }
 
+      // Add @bennyhinn18/remix-cloudflare if not present
+      if (!pkg.dependencies['@bennyhinn18/remix-cloudflare'] && !pkg.devDependencies['@bennyhinn18/remix-cloudflare']) {
+        pkg.dependencies['@bennyhinn18/remix-cloudflare'] = '^0.2.1'
+        modified = true
+        console.log('  ✅ Added @bennyhinn18/remix-cloudflare to package.json dependencies')
+      }
+
+      // Add wrangler if not present
+      if (!pkg.devDependencies['wrangler'] && !pkg.dependencies['wrangler']) {
+        pkg.devDependencies['wrangler'] = '^3.0.0'
+        modified = true
+        console.log('  ✅ Added wrangler to package.json devDependencies')
+      }
+
       if (modified) {
         fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf-8')
       }
@@ -98,23 +115,86 @@ export default createWorkerHandler(router)
     }
   }
 
-  // 4. Check app/router.ts for staticFiles
+  // 4. Adapt app/router.ts for Edge compatibility
   const routerPath = path.join(cwd, 'app', 'router.ts')
   if (fs.existsSync(routerPath)) {
-    const routerContent = fs.readFileSync(routerPath, 'utf-8')
-    if (routerContent.includes('staticFiles')) {
-      console.log('\n  ⚠️  Notice: "app/router.ts" currently imports staticFiles from "remix/middleware/static".')
-      console.log('     On Cloudflare Workers, static assets are served directly from "./public" via Cloudflare CDN.')
-      console.log('     Remember to remove staticFiles and createAssetServer from your worker router to avoid bundling errors.\n')
+    let routerContent = fs.readFileSync(routerPath, 'utf-8')
+    const hasStaticFiles = routerContent.includes('staticFiles')
+    const hasAssetsImport = routerContent.includes('./assets.ts') || routerContent.includes('render({ assets })')
+
+    if (hasStaticFiles || hasAssetsImport) {
+      // Backup original
+      const backupPath = path.join(cwd, 'app', 'router.ts.bak')
+      if (!fs.existsSync(backupPath)) {
+        fs.writeFileSync(backupPath, routerContent, 'utf-8')
+      }
+
+      // 1. Remove staticFiles import
+      routerContent = routerContent.replace(/import\s*\{\s*staticFiles\s*\}\s*from\s*['"]remix\/middleware\/static['"]\s*\n?/, '')
+      // 2. Remove assets import
+      routerContent = routerContent.replace(/import\s*\{\s*assets\s*\}\s*from\s*['"]\.\/assets\.ts['"]\s*\n?/, '')
+      // 3. Replace render({ assets }) with render()
+      routerContent = routerContent.replace(/render\(\{\s*assets\s*\}\)/g, 'render()')
+      // 4. Clean middleware array
+      routerContent = routerContent.replace(/middleware:\s*\[\s*staticFiles\([^\]]*\)\s*,\s*renderMiddleware\s*\]/, 'middleware: [renderMiddleware]')
+      routerContent = routerContent.replace(/staticFiles\([^)]*\)\s*,\s*/g, '')
+
+      fs.writeFileSync(routerPath, routerContent, 'utf-8')
+      console.log('  ✅ Refactored app/router.ts for edge compatibility (backup saved to app/router.ts.bak)')
+    } else {
+      console.log('  ℹ️  app/router.ts is edge-compatible (no Node asset server found)')
+    }
+  }
+
+  // 5. Update server.ts for Node dev static file serving if needed
+  const serverPath = path.join(cwd, 'server.ts')
+  if (fs.existsSync(serverPath)) {
+    let serverContent = fs.readFileSync(serverPath, 'utf-8')
+    if (!serverContent.includes('staticFiles') && serverContent.includes('router.fetch')) {
+      const backupServerPath = path.join(cwd, 'server.ts.bak')
+      if (!fs.existsSync(backupServerPath)) {
+        fs.writeFileSync(backupServerPath, serverContent, 'utf-8')
+      }
+
+      // Add imports
+      if (!serverContent.includes("from 'remix/router'")) {
+        serverContent = `import { createRouter } from 'remix/router'\nimport { staticFiles } from 'remix/middleware/static'\n` + serverContent
+      } else if (!serverContent.includes('staticFiles')) {
+        serverContent = `import { staticFiles } from 'remix/middleware/static'\n` + serverContent
+      }
+
+      // Wrap router.fetch with nodeRouter
+      const nodeRouterSnippet = `const nodeRouter = createRouter({\n  middleware: [staticFiles('./public', { index: false })],\n})\n\nasync function fetchHandler(request: Request): Promise<Response> {\n  const staticResponse = await nodeRouter.fetch(request)\n  if (staticResponse.status !== 404) {\n    return staticResponse\n  }\n  return router.fetch(request)\n}\n\n`
+      
+      serverContent = serverContent.replace(
+        /const server = http\.createServer\(createRequestListener\(router\.fetch,\s*\{\s*trustProxy:\s*isHmr\s*\}\)\)/,
+        `${nodeRouterSnippet}const server = http.createServer(createRequestListener(fetchHandler, { trustProxy: isHmr }))`
+      )
+
+      fs.writeFileSync(serverPath, serverContent, 'utf-8')
+      console.log('  ✅ Updated server.ts to serve static files in Node dev (backup saved to server.ts.bak)')
+    }
+  }
+
+  // 6. Inspect app/actions/document.tsx
+  const docPath = path.join(cwd, 'app', 'actions', 'document.tsx')
+  if (fs.existsSync(docPath)) {
+    const docContent = fs.readFileSync(docPath, 'utf-8')
+    if (docContent.includes('../assets.ts') || docContent.includes('scriptEntry')) {
+      console.log('\n  ℹ️  Notice: "app/actions/document.tsx" references dynamic assets from "app/assets.ts".')
+      console.log('     On Cloudflare Workers, static assets are served from "./public" via Cloudflare CDN.')
+      console.log('     If you use client-side hydration, compile your client script to "./public/entry.js"')
+      console.log('     and reference <script type="module" src="/entry.js" /> instead of Node assets.ts.\n')
     }
   }
 
   console.log(`
-🎉 Setup complete!
-To test locally:
+🎉 Cloudflare Workers setup complete!
+
+Test locally:
   npm run preview
 
-To deploy to Cloudflare:
+Deploy to Cloudflare:
   npm run deploy
 `)
 }

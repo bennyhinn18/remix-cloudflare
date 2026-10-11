@@ -37,8 +37,10 @@ npx @bennyhinn18/remix-cloudflare init
 
 This automatically:
 - 📄 Generates `worker.ts` with `createWorkerHandler`.
-- ⚙️ Configures `wrangler.jsonc` with modern Edge Assets (`./public`).
-- 🛠️ Patches `package.json` to prevent hanging CI builds and adds `deploy`/`preview` scripts.
+- ⚙️ Configures `wrangler.jsonc` with modern Edge Assets (`./public`) and `nodejs_compat`.
+- 🛠️ Patches `package.json` with `deploy` and `preview` scripts, and fixes hanging CI builds.
+- 🌐 Refactors `app/router.ts` for edge runtime (decoupling Node-only asset bundlers, with automatic `.bak` backup).
+- 🔄 Updates `server.ts` so `npm run dev` continues serving static assets in local Node development.
 
 ---
 
@@ -180,4 +182,4 @@ Contributions are welcome! Please check out [CONTRIBUTING.md](./CONTRIBUTING.md)
 
 ## 📄 License
 
-MIT © [BennyHinn SAM](https://github.com/bennyhinn18)
+MIT © [BennyHinn Sam](https://github.com/bennyhinn18)

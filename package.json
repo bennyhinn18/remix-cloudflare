@@ -1,6 +1,6 @@
 {
   "name": "@bennyhinn18/remix-cloudflare",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Blazing fast, lightweight Cloudflare Workers and Pages adapter for Remix 3",
   "author": "Benny Hinn <bennyhinn18>",
   "license": "MIT",
@@ -23,8 +23,7 @@
   ],
   "type": "module",
   "bin": {
-    "remix-cloudflare": "dist/cli.js",
-    "@bennyhinn18/remix-cloudflare": "dist/cli.js"
+    "remix-cloudflare": "./dist/cli.js"
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
